@@ -69,6 +69,16 @@ export default function Home() {
               Track capital raises and investor equity
             </p>
           </Link>
+
+          <Link
+            href="/equity"
+            className="p-6 bg-white border border-gray-300 rounded hover:border-gray-900 transition-all"
+          >
+            <h2 className="text-xl font-semibold mb-2 text-black">Equity & Cap Table</h2>
+            <p className="text-gray-600 text-sm">
+              Founder equity, ESOP pool, and dilution tracking
+            </p>
+          </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">

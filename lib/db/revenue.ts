@@ -30,7 +30,7 @@ export async function getRevenueAssumptions(
   const assumptions: Partial<RevenueAssumptions> = {};
   data.forEach((row) => {
     const key = row.key
-      .replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+      .replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase())
       .replace(/^./, (str: string) => str.toLowerCase());
     (assumptions as any)[key] = parseFloat(row.value);
   });

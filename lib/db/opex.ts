@@ -49,6 +49,56 @@ export async function saveOPEXProjections(
     .insert(projections);
 
   if (insertError) throw insertError;
+
+  // Calculate and save annual OPEX totals to annual_projections table
+  await saveAnnualOPEX(scenarioId, projections);
+}
+
+async function saveAnnualOPEX(
+  scenarioId: string,
+  monthlyProjections: any[]
+): Promise<void> {
+  // Get organization_id from scenario
+  const { data: scenario, error: scenarioError } = await supabase
+    .from('scenarios')
+    .select('organization_id')
+    .eq('id', scenarioId)
+    .single();
+
+  if (scenarioError || !scenario) return;
+
+  // Calculate annual totals
+  const annualData: any[] = [];
+  const maxYear = Math.ceil(monthlyProjections[monthlyProjections.length - 1].month / 12);
+
+  for (let year = 1; year <= maxYear; year++) {
+    const startMonth = (year - 1) * 12 + 1;
+    const endMonth = year * 12;
+
+    const yearlyProjections = monthlyProjections.filter(
+      (p) => p.month >= startMonth && p.month <= endMonth
+    );
+
+    const totalOPEX = yearlyProjections.reduce((sum, p) => sum + p.total_opex, 0);
+
+    annualData.push({
+      organization_id: scenario.organization_id,
+      scenario_id: scenarioId,
+      year,
+      opex: totalOPEX,
+    });
+  }
+
+  // Update or insert annual OPEX data
+  for (const data of annualData) {
+    const { error } = await supabase
+      .from('annual_projections')
+      .upsert(data, {
+        onConflict: 'scenario_id,year',
+      });
+
+    if (error) console.error('Error saving annual OPEX:', error);
+  }
 }
 
 export async function getOPEXProjections(

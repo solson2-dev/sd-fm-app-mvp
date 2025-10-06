@@ -22,9 +22,9 @@ export async function GET(request: Request) {
     // Get OPEX projections (annual)
     const { data: opexData, error: opexError } = await supabase
       .from('annual_projections')
-      .select('year, total_opex')
+      .select('year_number, total_opex')
       .eq('scenario_id', scenarioId)
-      .order('year');
+      .order('year_number');
 
     if (opexError) throw opexError;
 
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
       cogs: r.cogs,
     }));
 
-    const opexDataMapped = (opexData || []).map((o) => ({
-      year: o.year,
+    const opexDataMapped = (opexData || []).map((o: any) => ({
+      year: o.year_number,
       opex: o.total_opex || 0,
     }));
 

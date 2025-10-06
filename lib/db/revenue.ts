@@ -134,19 +134,19 @@ export async function getRevenueProjections(
     .from('annual_projections')
     .select('*')
     .eq('scenario_id', scenarioId)
-    .order('year');
+    .order('year_number');
 
   if (error) throw error;
 
-  return (data || []).map((row) => ({
-    year: row.year,
+  return (data || []).map((row: any) => ({
+    year: row.year_number,
     month: 12,
-    absoluteMonth: row.year * 12,
+    absoluteMonth: row.year_number * 12,
     arr: row.arr || 0,
-    setupFees: 0, // Not stored separately
-    totalRevenue: row.revenue || 0,
-    customers: row.customers || 0,
-    cogs: row.cogs || 0,
+    setupFees: row.setup_fees || 0,
+    totalRevenue: row.total_revenue || 0,
+    customers: row.ending_customers || 0,
+    cogs: 0, // Not stored in annual_projections (calculated from gross_profit)
     grossProfit: row.gross_profit || 0,
     grossMargin: row.gross_margin || 0,
   }));

@@ -19,25 +19,15 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Get revenue projections for exit year
-    const { data: revenueData, error: revenueError } = await supabase
+    // Get revenue projections and EBITDA for exit year
+    const { data: projectionData, error: projectionError } = await supabase
       .from('annual_projections')
-      .select('arr, revenue')
+      .select('arr, total_revenue, total_opex, gross_profit')
       .eq('scenario_id', scenarioId)
-      .eq('year', exitYear)
+      .eq('year_number', exitYear)
       .single();
 
-    if (revenueError && revenueError.code !== 'PGRST116') throw revenueError;
-
-    // Get income statement for EBITDA
-    const { data: incomeData, error: incomeError } = await supabase
-      .from('annual_projections')
-      .select('ebitda')
-      .eq('scenario_id', scenarioId)
-      .eq('year', exitYear)
-      .single();
-
-    if (incomeError && incomeError.code !== 'PGRST116') throw incomeError;
+    if (projectionError && projectionError.code !== 'PGRST116') throw projectionError;
 
     // Get funding rounds
     const { data: fundingRounds, error: fundingError } = await supabase
@@ -92,8 +82,9 @@ export async function GET(request: Request) {
       }))
     );
 
-    const arr = revenueData?.arr || 0;
-    const ebitda = incomeData?.ebitda || 0;
+    const arr = projectionData?.arr || 0;
+    // Calculate EBITDA as gross_profit - opex (simplified)
+    const ebitda = (projectionData?.gross_profit || 0) - (projectionData?.total_opex || 0);
 
     // Calculate exit scenarios with different multiples
     // Based on Excel Reference_Exit Senarios sheet: 2x, 3x, 5x, 6x, 8x, 10x, 15x, 20x, 25x

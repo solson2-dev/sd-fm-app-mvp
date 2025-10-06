@@ -1,9 +1,51 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Singleton instance to prevent connection pool leaks
+let supabaseClient: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Get or create a singleton Supabase client instance
+ *
+ * This implementation:
+ * 1. Prevents multiple client instances (connection pool leaks)
+ * 2. Reuses the same connection across the application
+ * 3. Configures optimal settings for server-side usage
+ *
+ * @returns {SupabaseClient} The singleton Supabase client
+ */
+export function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error(
+        'Missing Supabase environment variables. ' +
+        'Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+      );
+    }
+
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      db: {
+        schema: 'public',
+      },
+      auth: {
+        persistSession: false, // Server-side: no session persistence needed
+        autoRefreshToken: false, // Server-side: no auto-refresh
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'sd-fm-app-mvp/1.0',
+        },
+      },
+    });
+  }
+
+  return supabaseClient;
+}
+
+// For backward compatibility - existing code can still use `import { supabase }`
+export const supabase = getSupabaseClient();
 
 export type Database = {
   public: {

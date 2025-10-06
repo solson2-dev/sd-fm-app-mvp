@@ -176,18 +176,25 @@ export function getChurnForYear(year: number, schedule?: ChurnSchedule[]): numbe
  * Calculate license equivalents breakdown
  * Based on Excel Model_LicencEquivalents sheet
  * Ratio: Single User (800) : Team (80) : Enterprise (10)
- * Which translates to: 80% : 16% : 4% (simplified to 10:1 and 100:1)
+ * Which translates to: 89.9% : 9.0% : 1.1%
+ *
+ * FIXED: Previously used incorrect 80:16:4 ratio (80%/16%/4%)
+ * Now uses correct 800:80:10 ratio (89.9%/9.0%/1.1%)
  */
 export function calculateLicenseEquivalents(totalCustomers: number): LicenseEquivalents {
-  // Using the ratio from Excel: 800:80:10 (or 80:8:1)
-  const singleUser = totalCustomers * 0.8;  // 80%
-  const team = totalCustomers * 0.16;       // 16% (1/5 of single)
-  const enterprise = totalCustomers * 0.04; // 4% (1/20 of single)
+  // Using the correct ratio from Excel: 800:80:10
+  // Total parts: 800 + 80 + 10 = 890
+  // Single User: 800/890 = 0.8989... ≈ 89.9%
+  // Team: 80/890 = 0.0898... ≈ 9.0%
+  // Enterprise: 10/890 = 0.0112... ≈ 1.1%
+  const singleUser = Math.round(totalCustomers * 0.899);  // 89.9%
+  const team = Math.round(totalCustomers * 0.090);        // 9.0%
+  const enterprise = Math.round(totalCustomers * 0.011);  // 1.1%
 
   return {
-    singleUser: Math.round(singleUser),
-    team: Math.round(team),
-    enterprise: Math.round(enterprise),
+    singleUser,
+    team,
+    enterprise,
   };
 }
 

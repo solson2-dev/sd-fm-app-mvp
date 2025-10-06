@@ -75,11 +75,23 @@ export async function GET(request: Request) {
       }))
     );
 
+    // Calculate pre/post money valuations and price per share
+    const fundingRoundsDetail = (fundingRounds || []).map((r) => ({
+      roundName: r.round_name,
+      amount: r.amount_raised || 0,
+      preMoneyValuation: r.pre_money_valuation || 0,
+      postMoneyValuation: r.post_money_valuation || 0,
+      pricePerShare: r.price_per_share || 0,
+      sharesIssued: r.shares_issued || 0,
+      investorOwnership: r.investor_ownership || 0,
+      date: r.close_date,
+    }));
+
     return NextResponse.json({
       capTable,
       founders,
       esopPoolSize,
-      fundingRounds: fundingRounds || [],
+      fundingRounds: fundingRoundsDetail,
     });
   } catch (error) {
     console.error('Error generating cap table:', error);

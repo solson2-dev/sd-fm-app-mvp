@@ -3,15 +3,28 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CapTableEntry } from '@/lib/calculations/equity';
+import { CapTableWaterfall } from '@/components/CapTableWaterfall';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
+
+interface FundingRoundData {
+  roundName: string;
+  amount: number;
+  preMoneyValuation: number;
+  postMoneyValuation: number;
+  pricePerShare: number;
+  sharesIssued: number;
+  investorOwnership: number;
+  date: string;
+}
 
 export default function EquityPage() {
   const [capTable, setCapTable] = useState<CapTableEntry[]>([]);
   const [founders, setFounders] = useState<any[]>([]);
   const [esopPoolSize, setEsopPoolSize] = useState(0.15);
+  const [fundingRounds, setFundingRounds] = useState<FundingRoundData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'captable' | 'founders'>('captable');
+  const [activeTab, setActiveTab] = useState<'captable' | 'waterfall' | 'founders'>('captable');
 
   useEffect(() => {
     loadEquityData();
@@ -27,6 +40,7 @@ export default function EquityPage() {
       if (data.capTable) setCapTable(data.capTable);
       if (data.founders) setFounders(data.founders);
       if (data.esopPoolSize) setEsopPoolSize(data.esopPoolSize);
+      if (data.fundingRounds) setFundingRounds(data.fundingRounds);
     } catch (error) {
       console.error('Error loading equity data:', error);
     } finally {
@@ -103,6 +117,16 @@ export default function EquityPage() {
             }`}
           >
             Cap Table
+          </button>
+          <button
+            onClick={() => setActiveTab('waterfall')}
+            className={`px-6 py-3 font-medium border-b-2 transition-colors ${
+              activeTab === 'waterfall'
+                ? 'border-black text-black'
+                : 'border-transparent text-gray-600 hover:text-black'
+            }`}
+          >
+            Dilution Waterfall
           </button>
           <button
             onClick={() => setActiveTab('founders')}
@@ -206,6 +230,11 @@ export default function EquityPage() {
               )}
             </div>
           </>
+        )}
+
+        {/* Waterfall View */}
+        {activeTab === 'waterfall' && (
+          <CapTableWaterfall capTable={capTable} fundingRounds={fundingRounds} />
         )}
 
         {/* Founder Settings */}

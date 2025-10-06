@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       .from('funding_rounds')
       .select('*')
       .eq('scenario_id', scenarioId)
-      .order('round_date');
+      .order('close_date');
 
     if (error) throw error;
 
@@ -60,10 +60,10 @@ export async function POST(request: Request) {
         organization_id: scenario.organization_id,
         scenario_id: scenarioId,
         round_name: fundingRound.roundName,
-        amount: fundingRound.amount,
-        valuation: fundingRound.valuation,
-        round_date: fundingRound.roundDate,
-        investor_names: fundingRound.investorNames || null,
+        amount_raised: fundingRound.amount,
+        post_money_valuation: fundingRound.valuation,
+        close_date: fundingRound.roundDate,
+        lead_investor: fundingRound.investorNames || null,
       })
       .select()
       .single();

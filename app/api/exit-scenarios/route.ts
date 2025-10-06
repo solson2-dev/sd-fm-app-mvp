@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       .from('funding_rounds')
       .select('*')
       .eq('scenario_id', scenarioId)
-      .order('round_date');
+      .order('close_date');
 
     if (fundingError) throw fundingError;
 
@@ -86,8 +86,8 @@ export async function GET(request: Request) {
       esopPoolSize,
       (fundingRounds || []).map((r) => ({
         roundName: r.round_name,
-        amount: r.amount,
-        valuation: r.valuation,
+        amount: r.amount_raised || 0,
+        valuation: r.post_money_valuation || 0,
       }))
     );
 
@@ -116,21 +116,21 @@ export async function GET(request: Request) {
         const equityOwnership = investorEntry?.ownership || 0;
 
         const roundYear =
-          new Date(round.round_date).getFullYear() -
+          new Date(round.close_date).getFullYear() -
           new Date().getFullYear() +
           1;
 
         const returns = calculateExitReturns(
           exitYear,
           exitValuation,
-          round.amount,
+          round.amount_raised || 0,
           equityOwnership,
           roundYear
         );
 
         return {
           roundName: round.round_name,
-          investment: round.amount,
+          investment: round.amount_raised || 0,
           equityOwnership,
           ...returns,
         };

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // Get OPEX projections (annual)
     const { data: opexData, error: opexError } = await supabase
       .from('annual_projections')
-      .select('year, opex')
+      .select('year, total_opex')
       .eq('scenario_id', scenarioId)
       .order('year');
 
@@ -33,14 +33,14 @@ export async function GET(request: Request) {
       .from('funding_rounds')
       .select('*')
       .eq('scenario_id', scenarioId)
-      .order('round_date');
+      .order('close_date');
 
     if (fundingError) throw fundingError;
 
     // Map funding to years (simplified - using year from date)
     const fundingRounds = (fundingData || []).map((f) => ({
-      year: new Date(f.round_date).getFullYear() - new Date().getFullYear() + 1,
-      amount: f.amount,
+      year: new Date(f.close_date).getFullYear() - new Date().getFullYear() + 1,
+      amount: f.amount_raised || 0,
     }));
 
     // Prepare data for financial statements
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
 
     const opexDataMapped = (opexData || []).map((o) => ({
       year: o.year,
-      opex: o.opex || 0,
+      opex: o.total_opex || 0,
     }));
 
     // Generate financial statements

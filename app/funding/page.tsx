@@ -8,10 +8,10 @@ const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 interface FundingRound {
   id: string;
   round_name: string;
-  amount: number;
-  valuation: number;
-  round_date: string;
-  investor_names: string | null;
+  amount_raised: number;
+  post_money_valuation: number;
+  close_date: string;
+  lead_investor: string | null;
 }
 
 const ROUND_TYPES = [
@@ -231,16 +231,16 @@ export default function FundingPage() {
                         {round.round_name}
                       </td>
                       <td className="px-6 py-4 text-sm text-right font-mono">
-                        {formatCurrency(round.amount)}
+                        {formatCurrency(round.amount_raised)}
                       </td>
                       <td className="px-6 py-4 text-sm text-right font-mono">
-                        {formatCurrency(round.valuation)}
+                        {formatCurrency(round.post_money_valuation)}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {formatDate(round.round_date)}
+                        {formatDate(round.close_date)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {round.investor_names || '—'}
+                        {round.lead_investor || '—'}
                       </td>
                       <td className="px-6 py-4 text-sm text-right">
                         <button

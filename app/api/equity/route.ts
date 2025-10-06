@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       .from('funding_rounds')
       .select('*')
       .eq('scenario_id', scenarioId)
-      .order('round_date');
+      .order('close_date');
 
     if (fundingError) throw fundingError;
 
@@ -68,8 +68,8 @@ export async function GET(request: Request) {
       esopPoolSize,
       (fundingRounds || []).map((r) => ({
         roundName: r.round_name,
-        amount: r.amount,
-        valuation: r.valuation,
+        amount: r.amount_raised || 0,
+        valuation: r.post_money_valuation || 0,
       }))
     );
 

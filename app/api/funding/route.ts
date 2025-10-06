@@ -54,6 +54,17 @@ export async function POST(request: Request) {
       throw new Error('Scenario not found');
     }
 
+    // Set default ESOP refresh targets based on round type
+    let esopRefreshTarget = fundingRound.esopRefresh || null;
+    if (!esopRefreshTarget) {
+      const roundName = fundingRound.roundName.toLowerCase();
+      if (roundName.includes('pre-seed') || roundName.includes('preseed')) {
+        esopRefreshTarget = 0.15; // 15% after Pre-Seed
+      } else if (roundName.includes('series a')) {
+        esopRefreshTarget = 0.12; // 12% after Series A
+      }
+    }
+
     const { data, error } = await supabase
       .from('funding_rounds')
       .insert({
@@ -64,6 +75,7 @@ export async function POST(request: Request) {
         post_money_valuation: fundingRound.valuation,
         close_date: fundingRound.roundDate,
         lead_investor: fundingRound.investorNames || null,
+        esop_refresh_target: esopRefreshTarget,
       })
       .select()
       .single();

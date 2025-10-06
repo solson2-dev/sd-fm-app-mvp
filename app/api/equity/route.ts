@@ -59,7 +59,8 @@ export async function GET(request: Request) {
 
     const esopPoolSize = esopData ? parseFloat(esopData.value) : 0.15; // Default 15%
 
-    // Generate cap table
+    // Generate cap table with ESOP refresh configuration
+    // Default ESOP refresh: 15% after Pre-Seed, 12% after Series A
     const capTable = generateCapTable(
       founders.length > 0 ? founders : [
         { name: 'Founder 1', ownership: 0.6 },
@@ -70,6 +71,7 @@ export async function GET(request: Request) {
         roundName: r.round_name,
         amount: r.amount_raised || 0,
         valuation: r.post_money_valuation || 0,
+        esopRefresh: r.esop_refresh_target || undefined,
       }))
     );
 

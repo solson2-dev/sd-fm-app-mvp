@@ -24,11 +24,12 @@ export interface FundingRoundEquity {
   investorOwnership: number; // % (0-1)
   pricePerShare: number;
   sharesIssued: number;
+  esopRefresh?: number; // % target ESOP after round (0-1)
 }
 
 export interface CapTableEntry {
   stakeholder: string;
-  type: 'Founder' | 'ESOP' | 'Investor';
+  type: 'Founder' | 'ESOP' | 'ESOP Refresh' | 'Investor';
   shares: number;
   ownership: number; // % (0-1)
   roundName?: string;
@@ -187,12 +188,67 @@ export function calculateExitValuation(
 }
 
 /**
+ * Calculate ESOP refresh shares needed to reach target percentage
+ */
+export function calculateESOPRefresh(
+  currentCapTable: CapTableEntry[],
+  targetESOPPercent: number
+): {
+  refreshShares: number;
+  refreshOwnership: number;
+  updatedCapTable: CapTableEntry[];
+} {
+  const currentShares = currentCapTable.reduce((sum, entry) => sum + entry.shares, 0);
+  const currentESOPOwnership = currentCapTable
+    .filter(e => e.type === 'ESOP' || e.type === 'ESOP Refresh')
+    .reduce((sum, e) => sum + e.ownership, 0);
+
+  // If ESOP is already at or above target, no refresh needed
+  if (currentESOPOwnership >= targetESOPPercent) {
+    return {
+      refreshShares: 0,
+      refreshOwnership: 0,
+      updatedCapTable: currentCapTable,
+    };
+  }
+
+  // Calculate shares needed to bring ESOP to target percentage
+  // targetESOPPercent = (currentESOPShares + refreshShares) / (currentShares + refreshShares)
+  // Solving for refreshShares:
+  // refreshShares = (targetESOPPercent * currentShares - currentESOPShares) / (1 - targetESOPPercent)
+  const currentESOPShares = currentCapTable
+    .filter(e => e.type === 'ESOP' || e.type === 'ESOP Refresh')
+    .reduce((sum, e) => sum + e.shares, 0);
+
+  const refreshShares = Math.round(
+    (targetESOPPercent * currentShares - currentESOPShares * (1 - targetESOPPercent)) /
+    (1 - targetESOPPercent)
+  );
+
+  const refreshOwnership = targetESOPPercent - currentESOPOwnership;
+
+  // Dilute existing shareholders
+  const dilutionFactor = 1 - refreshOwnership;
+  const updatedCapTable: CapTableEntry[] = currentCapTable.map((entry) => ({
+    ...entry,
+    ownership: entry.ownership * dilutionFactor,
+  }));
+
+  return {
+    refreshShares,
+    refreshOwnership,
+    updatedCapTable,
+  };
+}
+
+/**
  * Generate complete cap table across multiple rounds
+ * ✅ UPDATED: Now supports ESOP refresh after funding rounds
  */
 export function generateCapTable(
   founders: { name: string; ownership: number }[],
   esopPoolSize: number,
-  fundingRounds: { roundName: string; amount: number; valuation: number }[]
+  fundingRounds: { roundName: string; amount: number; valuation: number; esopRefresh?: number }[]
 ): CapTableEntry[] {
   // Initialize with founders and ESOP
   const initial = initializeCapTable(founders, esopPoolSize);
@@ -230,6 +286,24 @@ export function generateCapTable(
       ownership: dilution.newInvestorOwnership,
       roundName: round.roundName,
     });
+
+    // Apply ESOP refresh if specified
+    if (round.esopRefresh && round.esopRefresh > 0) {
+      const refresh = calculateESOPRefresh(capTable, round.esopRefresh);
+
+      if (refresh.refreshShares > 0) {
+        capTable = refresh.updatedCapTable;
+
+        // Add ESOP refresh entry
+        capTable.push({
+          stakeholder: `ESOP Refresh (${round.roundName})`,
+          type: 'ESOP Refresh',
+          shares: refresh.refreshShares,
+          ownership: refresh.refreshOwnership,
+          roundName: round.roundName,
+        });
+      }
+    }
   }
 
   return capTable;

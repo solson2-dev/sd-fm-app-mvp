@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRevenueProjections } from '@/lib/db/revenue';
 import { supabase } from '@/lib/supabase/client';
 import { generateFinancialStatements } from '@/lib/calculations/financials';
+import type { AnnualProjectionRow, FundingRoundRow } from '@/lib/types/database';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
       cogs: r.cogs,
     }));
 
-    const opexDataMapped = (opexData || []).map((o: any) => ({
+    const opexDataMapped = (opexData || []).map((o: { year_number: number; total_opex: number | null }) => ({
       year: o.year_number,
       opex: o.total_opex || 0,
     }));

@@ -126,20 +126,20 @@ export default function VariablesPage() {
     if (isNaN(num)) return value;
 
     // Check if it's a percentage (between 0 and 1 or explicitly marked)
-    if (key.includes('percent') || key.includes('rate') || key.includes('margin') || key.includes('growth')) {
+    if (key.includes('percent') || key.includes('rate') || key.includes('margin') || key.includes('growth') || key.includes('discount') || key.includes('churn')) {
       if (num <= 1) {
         return `${(num * 100).toFixed(2)}%`;
       }
       return `${num.toFixed(2)}%`;
     }
 
-    // Check if it's a dollar amount
-    if (key.includes('arr') || key.includes('revenue') || key.includes('price') || key.includes('fee') || key.includes('cost')) {
+    // Check if it's a dollar amount (but not arr with 'arr' being part of another word)
+    if (key.includes('arr') || key.includes('revenue') || key.includes('price') || key.includes('fee') || key.includes('amount') || key.includes('cost') || key.includes('valuation') || key.includes('money')) {
       return `$${num.toLocaleString()}`;
     }
 
     // Check if it's a count
-    if (key.includes('customers') || key.includes('users') || key.includes('count') || key.includes('headcount')) {
+    if (key.includes('customers') || key.includes('users') || key.includes('count') || key.includes('headcount') || key.includes('tam')) {
       return num.toLocaleString();
     }
 

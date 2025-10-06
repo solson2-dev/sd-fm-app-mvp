@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { IncomeStatement, CashFlowStatement, BalanceSheet } from '@/lib/calculations/financials';
+import type { FinancialsMutationData } from '@/lib/types/database';
 
 interface FinancialsData {
   incomeStatements: IncomeStatement[];
@@ -23,7 +24,7 @@ export function useUpdateFinancials() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { scenarioId: string; assumptions: any }) => {
+    mutationFn: async (data: FinancialsMutationData) => {
       const response = await fetch('/api/financials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

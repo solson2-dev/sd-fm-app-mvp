@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CapTableEntry } from '@/lib/calculations/equity';
+import type { FounderData, FundingRoundData, EquityMutationData, EquityQueryData } from '@/lib/types/database';
 
 interface EquityData {
   capTable: CapTableEntry[];
-  founders: any[];
+  founders: FounderData[];
   esopPoolSize: number;
-  fundingRounds: any[];
+  fundingRounds: FundingRoundData[];
 }
 
 export function useEquity(scenarioId: string) {
@@ -23,7 +24,7 @@ export function useUpdateEquity() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { scenarioId: string; founders: any[]; esopPoolSize: number }) => {
+    mutationFn: async (data: EquityMutationData) => {
       const response = await fetch('/api/equity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,8 +38,10 @@ export function useUpdateEquity() {
       await queryClient.cancelQueries({ queryKey: ['equity', newData.scenarioId] });
       const previousData = queryClient.getQueryData(['equity', newData.scenarioId]);
 
-      queryClient.setQueryData(['equity', newData.scenarioId], (old: any) => ({
+      queryClient.setQueryData(['equity', newData.scenarioId], (old: EquityQueryData | undefined) => ({
         ...old,
+        capTable: old?.capTable || [],
+        fundingRounds: old?.fundingRounds || [],
         founders: newData.founders,
         esopPoolSize: newData.esopPoolSize,
       }));

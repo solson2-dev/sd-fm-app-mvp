@@ -6,6 +6,11 @@
 import { MonthlyOPEX } from './opex';
 import { RevenueMetrics } from './revenue';
 
+export interface FundingEvent {
+  month: number;
+  amount: number;
+}
+
 export interface CashPosition {
   month: number;
   year: number;
@@ -115,7 +120,7 @@ export function calculateBurnRateMetrics(
 /**
  * Get funding events from funding rounds data
  */
-export function getFundingEvents(fundingRounds: any[]): { month: number; amount: number }[] {
+export function getFundingEvents(fundingRounds: Array<{ close_month?: number | null; amount_raised?: number | null }>): FundingEvent[] {
   return fundingRounds.map(round => ({
     month: round.close_month || 3, // Default to month 3 if not specified
     amount: round.amount_raised || 0,

@@ -32,6 +32,7 @@ export interface RevenueAssumptions {
   setupFee: number; // One-time setup fee per customer (used if no tiers)
   annualPriceIncrease: number; // Annual price escalation % (e.g., 0.03 for 3%)
   churnRate: number; // Base annual churn rate % (e.g., 0.05 for 5%)
+  cogsPercent?: number; // COGS as % of revenue (e.g., 0.15 for 15%, defaults to 0.15)
   licenseTiers?: LicenseTier[]; // Optional tiered pricing
   discountSchedule?: DiscountSchedule[]; // Declining discounts by year
   churnSchedule?: ChurnSchedule[]; // Declining churn by year
@@ -383,8 +384,9 @@ export function calculateYearlyRevenue(
   // Total revenue = ARR + setup fees
   const totalRevenue = arr + setupFees;
 
-  // COGS (assumed 25% of revenue for SaaS - hosting, support, etc.)
-  const cogsRate = 0.25;
+  // COGS - configurable via assumptions, defaults to 15% (aligned with Excel model)
+  // Typical SaaS COGS: 10-30% (hosting, support, infrastructure, customer success)
+  const cogsRate = assumptions.cogsPercent ?? 0.15;
   const cogs = totalRevenue * cogsRate;
 
   // Gross profit = revenue - COGS

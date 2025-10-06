@@ -6,6 +6,7 @@ import type { CapTableEntry } from '@/lib/calculations/equity';
 import type { RevenueMetrics } from '@/lib/calculations/revenue';
 import { exportFinancialsPDF, exportCapTablePDF, downloadPDF } from '@/lib/export/pdf';
 import { exportFinancialsToExcel, exportCapTableToExcel, downloadExcel } from '@/lib/export/excel';
+import type { FundingRoundExportData } from '@/lib/types/database';
 
 interface FinancialsExportProps {
   incomeStatements: IncomeStatement[];
@@ -18,7 +19,7 @@ interface FinancialsExportProps {
 
 interface CapTableExportProps {
   capTable: CapTableEntry[];
-  fundingRounds?: any[];
+  fundingRounds?: FundingRoundExportData[];
   companyName?: string;
   scenarioName?: string;
 }

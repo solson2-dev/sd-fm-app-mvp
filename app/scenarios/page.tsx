@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ErrorState } from '@/components/ErrorState';
+import { EmptyState } from '@/components/EmptyState';
+import { Spinner } from '@/components/skeletons/Spinner';
 
 const DEFAULT_ORG_ID = 'a0000000-0000-0000-0000-000000000001';
 const DEFAULT_USER_ID = '30099033-b36b-4f7f-aaa8-6dc26b98f799';
@@ -17,6 +20,7 @@ interface Scenario {
 export default function ScenariosPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newScenarioName, setNewScenarioName] = useState('');
   const [newScenarioDescription, setNewScenarioDescription] = useState('');
@@ -28,9 +32,11 @@ export default function ScenariosPage() {
 
   async function loadScenarios() {
     try {
+      setError(null);
       const response = await fetch(
         `/api/scenarios?organizationId=${DEFAULT_ORG_ID}`
       );
+      if (!response.ok) throw new Error('Failed to load scenarios');
       const data = await response.json();
 
       if (data.scenarios) {
@@ -38,6 +44,7 @@ export default function ScenariosPage() {
       }
     } catch (error) {
       console.error('Error loading scenarios:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load scenarios'));
     } finally {
       setLoading(false);
     }
@@ -74,8 +81,44 @@ export default function ScenariosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading scenarios...</div>
+      <div className="min-h-screen p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-48 animate-pulse" />
+            <div className="flex gap-3">
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+              <div className="h-10 w-40 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full mb-4" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2 mb-4" />
+                <div className="flex gap-2">
+                  <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded flex-1" />
+                  <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded flex-1" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="max-w-6xl mx-auto">
+          <ErrorState
+            error={error}
+            onRetry={loadScenarios}
+            title="Failed to load scenarios"
+          />
+        </div>
       </div>
     );
   }
@@ -137,8 +180,15 @@ export default function ScenariosPage() {
           ))}
 
           {scenarios.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-500">
-              No scenarios yet. Create your first scenario to get started!
+            <div className="col-span-full">
+              <EmptyState
+                title="No scenarios yet"
+                description="Create your first scenario to start building financial models"
+                action={{
+                  label: '+ New Scenario',
+                  onClick: () => setShowCreateModal(true)
+                }}
+              />
             </div>
           )}
         </div>
@@ -206,9 +256,10 @@ export default function ScenariosPage() {
               </button>
               <button
                 onClick={createScenario}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!newScenarioName.trim() || creating}
               >
+                {creating && <Spinner size="sm" className="text-white" />}
                 {creating ? 'Creating...' : 'Create'}
               </button>
             </div>

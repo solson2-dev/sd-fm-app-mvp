@@ -15,6 +15,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { MonthlyOPEX } from '@/lib/calculations/opex';
+import { CardSkeleton } from '@/components/skeletons/CardSkeleton';
+import { ChartSkeleton } from '@/components/skeletons/ChartSkeleton';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { ErrorState } from '@/components/ErrorState';
+import { Spinner } from '@/components/skeletons/Spinner';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -37,6 +42,8 @@ export default function DashboardPage() {
   const [projections, setProjections] = useState<MonthlyOPEX[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [recalculating, setRecalculating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -44,31 +51,35 @@ export default function DashboardPage() {
 
   async function loadData() {
     try {
+      setError(null);
       // Load projections
       const projectionsResponse = await fetch(
         `/api/opex/projections?scenarioId=${DEFAULT_SCENARIO_ID}`
       );
+      if (!projectionsResponse.ok) throw new Error('Failed to load projections');
       const projectionsData = await projectionsResponse.json();
 
       // Load summary
       const summaryResponse = await fetch(
         `/api/opex/summary?scenarioId=${DEFAULT_SCENARIO_ID}`
       );
+      if (!summaryResponse.ok) throw new Error('Failed to load summary');
       const summaryData = await summaryResponse.json();
 
       setProjections(projectionsData.projections || []);
       setSummary(summaryData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load dashboard data'));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleRecalculate() {
-    setLoading(true);
+    setRecalculating(true);
     try {
-      await fetch('/api/opex/projections', {
+      const response = await fetch('/api/opex/projections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,18 +88,55 @@ export default function DashboardPage() {
           endMonth: 36,
         }),
       });
+      if (!response.ok) throw new Error('Failed to recalculate');
       await loadData();
     } catch (error) {
       console.error('Error recalculating:', error);
+      setError(error instanceof Error ? error : new Error('Failed to recalculate'));
     } finally {
-      setLoading(false);
+      setRecalculating(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading dashboard...</div>
+      <div className="min-h-screen p-8 pb-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="flex gap-3">
+              <div className="h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+              <div className="h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <CardSkeleton count={4} />
+          </div>
+
+          <ChartSkeleton />
+          <div className="mt-6">
+            <ChartSkeleton />
+          </div>
+          <div className="mt-6">
+            <TableSkeleton rows={12} columns={4} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="max-w-7xl mx-auto">
+          <ErrorState
+            error={error}
+            onRetry={loadData}
+            title="Failed to load OPEX dashboard"
+          />
+        </div>
       </div>
     );
   }
@@ -111,9 +159,11 @@ export default function DashboardPage() {
           <div className="flex gap-3">
             <button
               onClick={handleRecalculate}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              disabled={recalculating}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Recalculate
+              {recalculating && <Spinner size="sm" />}
+              {recalculating ? 'Recalculating...' : 'Recalculate'}
             </button>
             <Link href="/personnel" className="px-4 py-2 border rounded-lg hover:bg-gray-50">
               Edit Personnel

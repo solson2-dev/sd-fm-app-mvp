@@ -69,7 +69,7 @@ export function validatePastDate(date: string, fieldName: string): ValidationRes
 /**
  * Validate required field
  */
-export function validateRequired(value: any, fieldName: string): ValidationResult {
+export function validateRequired(value: unknown, fieldName: string): ValidationResult {
   if (value === null || value === undefined || value === '') {
     return { isValid: false, error: `${fieldName} is required` };
   }

@@ -5,6 +5,7 @@ import {
   calculateRevenueProjections,
   calculateCustomerProjections,
 } from '@/lib/calculations/revenue';
+import type { AssumptionRow, AnnualProjectionRow } from '@/lib/types/database';
 
 export async function getRevenueAssumptions(
   scenarioId: string
@@ -22,17 +23,18 @@ export async function getRevenueAssumptions(
       'setup_fee',
       'annual_price_increase',
       'churn_rate',
+      'cogs_percent',
     ]);
 
   if (error || !data || data.length === 0) return null;
 
   // Convert array of assumptions into RevenueAssumptions object
   const assumptions: Partial<RevenueAssumptions> = {};
-  data.forEach((row) => {
+  data.forEach((row: AssumptionRow) => {
     const key = row.key
       .replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase())
       .replace(/^./, (str: string) => str.toLowerCase());
-    (assumptions as any)[key] = parseFloat(row.value);
+    (assumptions as Record<string, number>)[key] = parseFloat(row.value);
   });
 
   return assumptions as RevenueAssumptions;
@@ -74,19 +76,31 @@ export async function saveRevenueAssumptions(
     },
   ];
 
-  // Delete existing revenue assumptions (including old growth_exponent if it exists)
-  const { error: deleteError } = await supabase
+  // Add cogs_percent if provided
+  if (assumptions.cogsPercent !== undefined) {
+    records.push({
+      scenario_id: scenarioId,
+      key: 'cogs_percent',
+      value: assumptions.cogsPercent,
+    });
+  }
+
+  // Upsert revenue assumptions - update existing or insert new
+  const { error } = await supabase
+    .from('assumptions')
+    .upsert(records, {
+      onConflict: 'scenario_id,key',
+      ignoreDuplicates: false
+    });
+
+  if (error) throw error;
+
+  // Clean up old growth_exponent assumption if it exists (no longer used)
+  await supabase
     .from('assumptions')
     .delete()
     .eq('scenario_id', scenarioId)
-    .in('key', [...records.map((r) => r.key), 'growth_exponent']);
-
-  if (deleteError) throw deleteError;
-
-  // Insert new assumptions
-  const { error: insertError } = await supabase.from('assumptions').insert(records);
-
-  if (insertError) throw insertError;
+    .eq('key', 'growth_exponent');
 }
 
 export async function saveRevenueProjections(
@@ -111,20 +125,15 @@ export async function saveRevenueProjections(
     gross_margin: p.grossMargin,
   }));
 
-  // Delete existing revenue projections
-  const { error: deleteError } = await supabase
+  // Upsert revenue projections - update existing or insert new
+  const { error } = await supabase
     .from('annual_projections')
-    .delete()
-    .eq('scenario_id', scenarioId);
+    .upsert(records, {
+      onConflict: 'scenario_id,year',
+      ignoreDuplicates: false
+    });
 
-  if (deleteError) throw deleteError;
-
-  // Insert new projections
-  const { error: insertError } = await supabase
-    .from('annual_projections')
-    .insert(records);
-
-  if (insertError) throw insertError;
+  if (error) throw error;
 }
 
 export async function getRevenueProjections(
@@ -138,7 +147,7 @@ export async function getRevenueProjections(
 
   if (error) throw error;
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: AnnualProjectionRow) => ({
     year: row.year_number,
     month: 12,
     absoluteMonth: row.year_number * 12,

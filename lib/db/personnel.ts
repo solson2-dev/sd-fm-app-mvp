@@ -22,26 +22,21 @@ export async function upsertPersonnelRoles(
   scenarioId: string,
   roles: PersonnelRole[]
 ): Promise<void> {
-  // Delete existing roles
-  const { error: deleteError } = await supabase
+  // Upsert personnel roles - update existing or insert new
+  const records = roles.map(role => ({
+    scenario_id: scenarioId,
+    role_name: role.roleName,
+    base_salary: role.baseSalary,
+    start_month: role.startMonth,
+    end_month: role.endMonth || null,
+  }));
+
+  const { error } = await supabase
     .from('personnel_roles')
-    .delete()
-    .eq('scenario_id', scenarioId);
+    .upsert(records, {
+      onConflict: 'scenario_id,role_name,start_month',
+      ignoreDuplicates: false
+    });
 
-  if (deleteError) throw deleteError;
-
-  // Insert new roles
-  const { error: insertError } = await supabase
-    .from('personnel_roles')
-    .insert(
-      roles.map(role => ({
-        scenario_id: scenarioId,
-        role_name: role.roleName,
-        base_salary: role.baseSalary,
-        start_month: role.startMonth,
-        end_month: role.endMonth || null,
-      }))
-    );
-
-  if (insertError) throw insertError;
+  if (error) throw error;
 }

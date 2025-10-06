@@ -5,6 +5,7 @@ import {
   calculateExitValuation,
   calculateExitReturns,
 } from '@/lib/calculations/equity';
+import type { FounderData, FundingRoundRow } from '@/lib/types/database';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -114,42 +115,61 @@ export async function POST(request: Request) {
       );
     }
 
-    // Delete existing founder assumptions
-    await supabase
-      .from('assumptions')
-      .delete()
-      .eq('scenario_id', scenarioId)
-      .like('key', 'founder_%');
+    // Get organization_id from scenario
+    const { data: scenario, error: scenarioError } = await supabase
+      .from('scenarios')
+      .select('organization_id')
+      .eq('id', scenarioId)
+      .single();
 
-    // Save founder equity
-    const founderRecords = founders.flatMap((f: any) => [
+    if (scenarioError || !scenario) {
+      throw new Error('Scenario not found');
+    }
+
+    // Upsert founder equity assumptions
+    const founderRecords = founders.flatMap((f: FounderData) => [
       {
+        organization_id: scenario.organization_id,
         scenario_id: scenarioId,
         key: `founder_${f.name.toLowerCase()}_ownership`,
         value: f.ownership.toString(),
+        category: 'equity',
       },
     ]);
 
     if (founderRecords.length > 0) {
-      const { error: founderError } = await supabase
+      const { error } = await supabase
         .from('assumptions')
-        .insert(founderRecords);
+        .upsert(founderRecords, {
+          onConflict: 'scenario_id,key',
+          ignoreDuplicates: false
+        });
 
-      if (founderError) throw founderError;
+      if (error) throw error;
+
+      // Clean up removed founders (delete founder_* assumptions not in current set)
+      const currentFounderKeys = founderRecords.map((r: { key: string }) => r.key);
+      await supabase
+        .from('assumptions')
+        .delete()
+        .eq('scenario_id', scenarioId)
+        .like('key', 'founder_%')
+        .not('key', 'in', `(${currentFounderKeys.map((k: string) => `'${k}'`).join(',')})`);
     }
 
-    // Save ESOP pool size
-    await supabase
+    // Upsert ESOP pool size assumption
+    const { error: esopError } = await supabase
       .from('assumptions')
-      .delete()
-      .eq('scenario_id', scenarioId)
-      .eq('key', 'esop_pool_size');
-
-    const { error: esopError } = await supabase.from('assumptions').insert({
-      scenario_id: scenarioId,
-      key: 'esop_pool_size',
-      value: esopPoolSize.toString(),
-    });
+      .upsert({
+        organization_id: scenario.organization_id,
+        scenario_id: scenarioId,
+        key: 'esop_pool_size',
+        value: esopPoolSize.toString(),
+        category: 'equity',
+      }, {
+        onConflict: 'scenario_id,key',
+        ignoreDuplicates: false
+      });
 
     if (esopError) throw esopError;
 

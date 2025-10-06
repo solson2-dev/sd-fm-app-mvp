@@ -5,6 +5,7 @@ import {
   MonthlyOPEX,
 } from '@/lib/calculations/opex';
 import { PersonnelRole, calculateHeadcount } from '@/lib/calculations/personnel';
+import type { MonthlyOpexProjectionRow, AnnualOpexData } from '@/lib/types/database';
 
 export async function saveOPEXProjections(
   scenarioId: string,
@@ -12,7 +13,7 @@ export async function saveOPEXProjections(
   startMonth: number,
   endMonth: number
 ): Promise<void> {
-  const projections = [];
+  const projections: Omit<MonthlyOpexProjectionRow, 'id' | 'calculated_at'>[] = [];
 
   for (let month = startMonth; month <= endMonth; month++) {
     const opex = calculateMonthlyOPEX(roles, month);
@@ -35,20 +36,15 @@ export async function saveOPEXProjections(
     });
   }
 
-  // Delete existing projections
-  const { error: deleteError } = await supabase
+  // Upsert monthly OPEX projections - update existing or insert new
+  const { error } = await supabase
     .from('monthly_opex_projections')
-    .delete()
-    .eq('scenario_id', scenarioId);
+    .upsert(projections, {
+      onConflict: 'scenario_id,month',
+      ignoreDuplicates: false
+    });
 
-  if (deleteError) throw deleteError;
-
-  // Insert new projections
-  const { error: insertError } = await supabase
-    .from('monthly_opex_projections')
-    .insert(projections);
-
-  if (insertError) throw insertError;
+  if (error) throw error;
 
   // Calculate and save annual OPEX totals to annual_projections table
   await saveAnnualOPEX(scenarioId, projections);
@@ -56,13 +52,13 @@ export async function saveOPEXProjections(
 
 async function saveAnnualOPEX(
   scenarioId: string,
-  monthlyProjections: any[]
+  monthlyProjections: Array<Omit<MonthlyOpexProjectionRow, 'id' | 'calculated_at'> | MonthlyOpexProjectionRow>
 ): Promise<void> {
   // Use default organization ID for MVP (RLS policies block scenario lookup)
   const organizationId = 'a0000000-0000-0000-0000-000000000001';
 
   // Calculate annual totals
-  const annualData: any[] = [];
+  const annualData: AnnualOpexData[] = [];
   const maxYear = Math.ceil(monthlyProjections[monthlyProjections.length - 1].month / 12);
 
   for (let year = 1; year <= maxYear; year++) {
@@ -106,7 +102,7 @@ export async function getOPEXProjections(
 
   if (error) throw error;
 
-  return (data || []).map(row => ({
+  return (data || []).map((row: MonthlyOpexProjectionRow) => ({
     month: row.month,
     personnelCost: row.personnel_cost,
     productDevelopment: row.infrastructure,

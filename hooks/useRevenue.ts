@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RevenueMetrics, RevenueAssumptions } from '@/lib/calculations/revenue';
+import type { RevenueMutationData, RevenueQueryData } from '@/lib/types/database';
 
 interface RevenueData {
   projections: RevenueMetrics[];
@@ -21,7 +22,7 @@ export function useUpdateRevenue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { scenarioId: string; assumptions: Partial<RevenueAssumptions> }) => {
+    mutationFn: async (data: RevenueMutationData) => {
       const response = await fetch('/api/revenue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,9 +36,9 @@ export function useUpdateRevenue() {
       await queryClient.cancelQueries({ queryKey: ['revenue', newData.scenarioId] });
       const previousData = queryClient.getQueryData(['revenue', newData.scenarioId]);
 
-      queryClient.setQueryData(['revenue', newData.scenarioId], (old: any) => ({
-        ...old,
-        assumptions: { ...old?.assumptions, ...newData.assumptions },
+      queryClient.setQueryData(['revenue', newData.scenarioId], (old: RevenueQueryData | undefined) => ({
+        projections: old?.projections || [],
+        assumptions: { ...old?.assumptions, ...newData.assumptions } as RevenueAssumptions,
       }));
 
       return { previousData };

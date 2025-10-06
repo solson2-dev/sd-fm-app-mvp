@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 import type { IncomeStatement, CashFlowStatement, BalanceSheet } from '@/lib/calculations/financials';
 import type { CapTableEntry } from '@/lib/calculations/equity';
 import type { RevenueMetrics } from '@/lib/calculations/revenue';
+import type { FundingRoundExportData } from '@/lib/types/database';
 
 export interface ExcelExportOptions {
   companyName?: string;
@@ -173,7 +174,7 @@ export function exportFinancialsToExcel(
 
 export function exportCapTableToExcel(
   capTable: CapTableEntry[],
-  fundingRounds: any[] = [],
+  fundingRounds: FundingRoundExportData[] = [],
   options: ExcelExportOptions = {}
 ) {
   const { companyName = 'Studio Datum', scenarioName = 'Base Case' } = options;

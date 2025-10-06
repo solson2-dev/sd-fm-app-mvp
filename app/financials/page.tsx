@@ -9,6 +9,8 @@ import {
 } from '@/lib/calculations/financials';
 import { FinancialStatements } from '@/components/FinancialStatements';
 import { formatCurrency, formatPercent } from '@/lib/utils/format';
+import { CardSkeleton } from '@/components/skeletons/CardSkeleton';
+import { ErrorState } from '@/components/ErrorState';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -17,6 +19,7 @@ export default function FinancialsPage() {
   const [cashFlows, setCashFlows] = useState<CashFlowStatement[]>([]);
   const [balanceSheets, setBalanceSheets] = useState<BalanceSheet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [displayYears, setDisplayYears] = useState<number>(5);
 
   useEffect(() => {
@@ -25,9 +28,11 @@ export default function FinancialsPage() {
 
   async function loadFinancials() {
     try {
+      setError(null);
       const response = await fetch(
         `/api/financials?scenarioId=${DEFAULT_SCENARIO_ID}&years=10`
       );
+      if (!response.ok) throw new Error('Failed to load financials');
       const data = await response.json();
 
       if (data.incomeStatements) setIncomeStatements(data.incomeStatements);
@@ -35,6 +40,7 @@ export default function FinancialsPage() {
       if (data.balanceSheets) setBalanceSheets(data.balanceSheets);
     } catch (error) {
       console.error('Error loading financials:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load financials'));
     } finally {
       setLoading(false);
     }
@@ -42,8 +48,48 @@ export default function FinancialsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading financial statements...</div>
+      <div className="min-h-screen p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          </div>
+
+          <div className="mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-48 animate-pulse" />
+          </div>
+
+          <div className="space-y-8 animate-pulse">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+                <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-1/4 mb-4" />
+                <div className="space-y-2">
+                  {Array.from({ length: 10 }).map((_, j) => (
+                    <div key={j} className="h-12 bg-gray-200 dark:bg-gray-800 rounded" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardSkeleton count={3} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="max-w-7xl mx-auto">
+          <ErrorState
+            error={error}
+            onRetry={loadFinancials}
+            title="Failed to load financial statements"
+          />
+        </div>
       </div>
     );
   }

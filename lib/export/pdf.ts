@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import type { IncomeStatement, CashFlowStatement, BalanceSheet } from '@/lib/calculations/financials';
 import type { CapTableEntry } from '@/lib/calculations/equity';
 import { formatCurrency, formatPercent } from '@/lib/utils/format';
+import type { FundingRoundExportData } from '@/lib/types/database';
 
 export interface PDFExportOptions {
   companyName?: string;
@@ -119,7 +120,7 @@ export function exportFinancialsPDF(
 
 export function exportCapTablePDF(
   capTable: CapTableEntry[],
-  fundingRounds: any[],
+  fundingRounds: FundingRoundExportData[],
   options: PDFExportOptions = {}
 ) {
   const doc = new jsPDF();

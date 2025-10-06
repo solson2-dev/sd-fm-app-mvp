@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { validateFundingAmount, validateValuation, validateRequired } from '@/lib/utils/validation';
+import { CardSkeleton } from '@/components/skeletons/CardSkeleton';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { ErrorState } from '@/components/ErrorState';
+import { EmptyState } from '@/components/EmptyState';
+import { Spinner } from '@/components/skeletons/Spinner';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -29,6 +34,7 @@ const ROUND_TYPES = [
 export default function FundingPage() {
   const [fundingRounds, setFundingRounds] = useState<FundingRound[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
@@ -47,9 +53,11 @@ export default function FundingPage() {
 
   async function loadFundingRounds() {
     try {
+      setError(null);
       const response = await fetch(
         `/api/funding?scenarioId=${DEFAULT_SCENARIO_ID}`
       );
+      if (!response.ok) throw new Error('Failed to load funding rounds');
       const data = await response.json();
 
       if (data.fundingRounds) {
@@ -57,6 +65,7 @@ export default function FundingPage() {
       }
     } catch (error) {
       console.error('Error loading funding rounds:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load funding rounds'));
     } finally {
       setLoading(false);
     }
@@ -170,8 +179,36 @@ export default function FundingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="flex gap-3">
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+              <div className="h-10 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <CardSkeleton count={3} />
+          </div>
+
+          <TableSkeleton rows={5} columns={7} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="max-w-6xl mx-auto">
+          <ErrorState
+            error={error}
+            onRetry={loadFundingRounds}
+            title="Failed to load funding rounds"
+          />
+        </div>
       </div>
     );
   }
@@ -233,9 +270,14 @@ export default function FundingPage() {
         {/* Funding Rounds Table */}
         <div className="bg-white border rounded-lg overflow-hidden">
           {fundingRounds.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              No funding rounds yet. Add your first funding round to get started!
-            </div>
+            <EmptyState
+              title="No funding rounds yet"
+              description="Add your first funding round to start tracking capital raises and dilution"
+              action={{
+                label: '+ Add Funding Round',
+                onClick: () => setShowModal(true)
+              }}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -419,9 +461,10 @@ export default function FundingPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
                   disabled={editing}
                 >
+                  {editing && <Spinner size="sm" className="text-white" />}
                   {editing ? 'Adding...' : 'Add Round'}
                 </button>
               </div>

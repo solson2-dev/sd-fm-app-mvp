@@ -3,12 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getDefaultPersonnelRoles, PersonnelRole } from '@/lib/calculations/personnel';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { ErrorState } from '@/components/ErrorState';
+import { Spinner } from '@/components/skeletons/Spinner';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
 export default function PersonnelPage() {
   const [roles, setRoles] = useState<PersonnelRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -18,7 +22,9 @@ export default function PersonnelPage() {
 
   async function loadRoles() {
     try {
+      setError(null);
       const response = await fetch(`/api/personnel?scenarioId=${DEFAULT_SCENARIO_ID}`);
+      if (!response.ok) throw new Error('Failed to load personnel roles');
       const data = await response.json();
 
       if (data.roles && data.roles.length > 0) {
@@ -29,7 +35,8 @@ export default function PersonnelPage() {
       }
     } catch (error) {
       console.error('Error loading roles:', error);
-      // Fallback to defaults
+      setError(error instanceof Error ? error : new Error('Failed to load personnel roles'));
+      // Fallback to defaults on error
       setRoles(getDefaultPersonnelRoles());
     } finally {
       setLoading(false);
@@ -90,8 +97,18 @@ export default function PersonnelPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen p-8 pb-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          </div>
+          <TableSkeleton rows={15} columns={4} />
+          <div className="mt-6 flex gap-4">
+            <div className="h-12 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            <div className="h-12 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -174,8 +191,9 @@ export default function PersonnelPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium flex items-center gap-2"
           >
+            {saving && <Spinner size="sm" className="text-white" />}
             {saving ? 'Saving...' : 'Save & Calculate'}
           </button>
 

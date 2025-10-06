@@ -7,6 +7,8 @@ import {
   getDefaultRevenueAssumptions,
   calculateGrowthExponent,
 } from '@/lib/calculations/revenue';
+import { Spinner } from '@/components/skeletons/Spinner';
+import { ErrorState } from '@/components/ErrorState';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -15,6 +17,7 @@ export default function RevenuePage() {
     getDefaultRevenueAssumptions()
   );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -24,9 +27,11 @@ export default function RevenuePage() {
 
   async function loadAssumptions() {
     try {
+      setError(null);
       const response = await fetch(
         `/api/revenue/assumptions?scenarioId=${DEFAULT_SCENARIO_ID}`
       );
+      if (!response.ok) throw new Error('Failed to load assumptions');
       const data = await response.json();
 
       if (data.assumptions) {
@@ -34,6 +39,7 @@ export default function RevenuePage() {
       }
     } catch (error) {
       console.error('Error loading assumptions:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load assumptions'));
     } finally {
       setLoading(false);
     }
@@ -87,8 +93,46 @@ export default function RevenuePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen p-8 pb-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse"
+              >
+                <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-1/2 mb-4" />
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, j) => (
+                    <div key={j}>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-2" />
+                      <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="max-w-4xl mx-auto">
+          <ErrorState
+            error={error}
+            onRetry={loadAssumptions}
+            title="Failed to load revenue assumptions"
+          />
+        </div>
       </div>
     );
   }
@@ -335,8 +379,9 @@ export default function RevenuePage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium flex items-center gap-2"
           >
+            {saving && <Spinner size="sm" className="text-white" />}
             {saving ? 'Saving...' : 'Save & Calculate'}
           </button>
 

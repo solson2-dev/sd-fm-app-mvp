@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
+import type { AssumptionRow, GroupedAssumptions } from '@/lib/types/database';
 
 /**
  * GET /api/assumptions?scenarioId=xxx
@@ -26,14 +27,14 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     // Group assumptions by category for easier display
-    const grouped = (assumptions || []).reduce((acc: any, assumption: any) => {
+    const grouped = (assumptions || []).reduce((acc: GroupedAssumptions, assumption: AssumptionRow) => {
       const category = assumption.category || 'general';
       if (!acc[category]) {
         acc[category] = [];
       }
       acc[category].push(assumption);
       return acc;
-    }, {});
+    }, {} as GroupedAssumptions);
 
     return NextResponse.json({
       assumptions: assumptions || [],
@@ -131,11 +132,11 @@ export async function PUT(request: Request) {
     }
 
     // Prepare records for upsert
-    const records = assumptions.map((a: any) => ({
+    const records = assumptions.map((a: Partial<AssumptionRow>) => ({
       organization_id: scenario.organization_id,
       scenario_id: scenarioId,
-      key: a.key,
-      value: a.value.toString(),
+      key: a.key!,
+      value: a.value!.toString(),
       category: a.category || 'general',
       description: a.description || null,
     }));

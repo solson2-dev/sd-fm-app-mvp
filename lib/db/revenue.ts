@@ -18,7 +18,6 @@ export async function getRevenueAssumptions(
       'target_penetration',
       'years_to_target',
       'year1_customers',
-      'growth_exponent',
       'base_arr',
       'setup_fee',
       'annual_price_increase',
@@ -43,7 +42,7 @@ export async function saveRevenueAssumptions(
   scenarioId: string,
   assumptions: RevenueAssumptions
 ): Promise<void> {
-  // Convert object to array of key-value pairs
+  // Convert object to array of key-value pairs (no growth_exponent - it's calculated)
   const records = [
     { scenario_id: scenarioId, key: 'tam', value: assumptions.tam },
     {
@@ -61,11 +60,6 @@ export async function saveRevenueAssumptions(
       key: 'year1_customers',
       value: assumptions.year1Customers,
     },
-    {
-      scenario_id: scenarioId,
-      key: 'growth_exponent',
-      value: assumptions.growthExponent,
-    },
     { scenario_id: scenarioId, key: 'base_arr', value: assumptions.baseArr },
     { scenario_id: scenarioId, key: 'setup_fee', value: assumptions.setupFee },
     {
@@ -80,12 +74,12 @@ export async function saveRevenueAssumptions(
     },
   ];
 
-  // Delete existing revenue assumptions
+  // Delete existing revenue assumptions (including old growth_exponent if it exists)
   const { error: deleteError } = await supabase
     .from('assumptions')
     .delete()
     .eq('scenario_id', scenarioId)
-    .in('key', records.map((r) => r.key));
+    .in('key', [...records.map((r) => r.key), 'growth_exponent']);
 
   if (deleteError) throw deleteError;
 
@@ -102,7 +96,17 @@ export async function saveRevenueProjections(
   // Note: This stores in annual_projections table
   // Update the projections with revenue data
 
+  // Get the organization_id from the scenario
+  const { data: scenario, error: scenarioError } = await supabase
+    .from('scenarios')
+    .select('organization_id')
+    .eq('id', scenarioId)
+    .single();
+
+  if (scenarioError || !scenario) throw scenarioError || new Error('Scenario not found');
+
   const records = projections.map((p) => ({
+    organization_id: scenario.organization_id,
     scenario_id: scenarioId,
     year: p.year,
     arr: p.arr,

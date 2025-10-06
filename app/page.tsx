@@ -9,7 +9,7 @@ export default function Home() {
           OPEX modeling with validated calculations (100% Excel accuracy)
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
             href="/personnel"
             className="p-6 border rounded-lg hover:border-blue-500 hover:shadow-lg transition-all"
@@ -37,6 +37,16 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-2">Revenue Model ✨</h2>
             <p className="text-gray-600">
               Customer acquisition, ARR, and 10-year revenue projections
+            </p>
+          </Link>
+
+          <Link
+            href="/scenarios"
+            className="p-6 border rounded-lg hover:border-purple-500 hover:shadow-lg transition-all bg-purple-50"
+          >
+            <h2 className="text-2xl font-semibold mb-2">Scenarios 🔄</h2>
+            <p className="text-gray-600">
+              Create and compare multiple financial scenarios
             </p>
           </Link>
         </div>

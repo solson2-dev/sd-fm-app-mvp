@@ -11,7 +11,6 @@ export interface RevenueAssumptions {
   targetPenetration: number; // Target market share % (e.g., 0.05 for 5%)
   yearsToTarget: number; // Years to reach target penetration
   year1Customers: number; // Starting customer count
-  growthExponent: number; // Controls S-curve shape (default: 2.575)
   baseArr: number; // Base ARR per customer
   setupFee: number; // One-time setup fee per customer
   annualPriceIncrease: number; // Annual price escalation % (e.g., 0.03 for 3%)
@@ -41,6 +40,20 @@ export interface RevenueMetrics {
 }
 
 /**
+ * Calculate growth exponent from other parameters
+ * Formula: LOG(year1Customers / targetCustomers) / LOG(1 / yearsToTarget)
+ * This creates an S-curve that connects Year 1 customers to target penetration
+ */
+export function calculateGrowthExponent(assumptions: RevenueAssumptions): number {
+  const targetCustomers = assumptions.tam * assumptions.targetPenetration;
+  const ratio = assumptions.year1Customers / targetCustomers;
+  const base = 1 / assumptions.yearsToTarget;
+
+  // Exponent = LOG(ratio) / LOG(base)
+  return Math.log(ratio) / Math.log(base);
+}
+
+/**
  * Get default revenue assumptions from Excel model
  */
 export function getDefaultRevenueAssumptions(): RevenueAssumptions {
@@ -49,7 +62,6 @@ export function getDefaultRevenueAssumptions(): RevenueAssumptions {
     targetPenetration: 0.05, // 5%
     yearsToTarget: 7,
     year1Customers: 10,
-    growthExponent: 2.575,
     baseArr: 24000,
     setupFee: 2500,
     annualPriceIncrease: 0.03, // 3%
@@ -67,7 +79,8 @@ export function calculateMarketPenetration(
 ): number {
   if (year === 0) return 0;
 
-  const { targetPenetration, yearsToTarget, growthExponent } = assumptions;
+  const { targetPenetration, yearsToTarget } = assumptions;
+  const growthExponent = calculateGrowthExponent(assumptions);
 
   // S-curve formula
   const penetration =

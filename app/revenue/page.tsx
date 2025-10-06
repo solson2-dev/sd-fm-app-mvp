@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   RevenueAssumptions,
   getDefaultRevenueAssumptions,
+  calculateGrowthExponent,
 } from '@/lib/calculations/revenue';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
@@ -93,11 +94,12 @@ export default function RevenuePage() {
   }
 
   // Calculate derived metrics
+  const growthExponent = calculateGrowthExponent(assumptions);
   const targetCustomers = Math.round(assumptions.tam * assumptions.targetPenetration);
   const year5Target = Math.round(
     assumptions.tam *
       (assumptions.targetPenetration *
-        Math.pow(5 / assumptions.yearsToTarget, assumptions.growthExponent))
+        Math.pow(5 / assumptions.yearsToTarget, growthExponent))
   );
 
   return (
@@ -183,19 +185,13 @@ export default function RevenuePage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Growth Exponent
+                  Growth Exponent (Calculated)
                 </label>
-                <input
-                  type="number"
-                  value={assumptions.growthExponent}
-                  onChange={(e) => updateAssumption('growthExponent', e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  step="0.1"
-                  min="1"
-                  max="5"
-                />
+                <div className="w-full px-3 py-2 border rounded bg-gray-50 text-gray-700 font-mono">
+                  {growthExponent.toFixed(3)}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Controls S-curve shape (higher = faster early growth)
+                  Auto-calculated from Year 1 customers and target penetration
                 </p>
               </div>
             </div>
@@ -356,7 +352,7 @@ export default function RevenuePage() {
           <h3 className="font-semibold mb-2">ℹ️ How it Works</h3>
           <ul className="text-sm text-gray-700 space-y-1">
             <li>• <strong>S-Curve Growth</strong>: Customer acquisition follows Market% = Target% × (Year/YearsToTarget)^GrowthExponent</li>
-            <li>• <strong>Growth Exponent</strong>: Controls curve shape (2.575 = moderate S-curve, higher = steeper)</li>
+            <li>• <strong>Growth Exponent</strong>: Auto-calculated using LOG(Year1/Target) / LOG(1/YearsToTarget) to create realistic startup growth</li>
             <li>• <strong>ARR Calculation</strong>: Total Customers × ARR per Customer (with annual price increases)</li>
             <li>• <strong>Revenue</strong>: ARR + Setup Fees from new customers</li>
             <li>• <strong>Churn</strong>: Annual customer loss rate applied each year</li>

@@ -46,6 +46,12 @@ export interface CustomerMetrics {
   arrPerCustomer: number;
 }
 
+export interface LicenseEquivalents {
+  singleUser: number; // 80% of total
+  team: number;       // 16% of total (1/5 of single user)
+  enterprise: number; // 4% of total (1/10 of single user)
+}
+
 export interface RevenueMetrics {
   year: number;
   month: number; // Month within year (1-12)
@@ -57,6 +63,7 @@ export interface RevenueMetrics {
   cogs: number; // Cost of Goods Sold
   grossProfit: number;
   grossMargin: number; // %
+  licenseEquivalents?: LicenseEquivalents;
 }
 
 /**
@@ -163,6 +170,25 @@ export function getChurnForYear(year: number, schedule?: ChurnSchedule[]): numbe
 
   // Default to last entry if year exceeds schedule
   return activeSchedule[activeSchedule.length - 1]?.churnRate || 0.15;
+}
+
+/**
+ * Calculate license equivalents breakdown
+ * Based on Excel Model_LicencEquivalents sheet
+ * Ratio: Single User (800) : Team (80) : Enterprise (10)
+ * Which translates to: 80% : 16% : 4% (simplified to 10:1 and 100:1)
+ */
+export function calculateLicenseEquivalents(totalCustomers: number): LicenseEquivalents {
+  // Using the ratio from Excel: 800:80:10 (or 80:8:1)
+  const singleUser = totalCustomers * 0.8;  // 80%
+  const team = totalCustomers * 0.16;       // 16% (1/5 of single)
+  const enterprise = totalCustomers * 0.04; // 4% (1/20 of single)
+
+  return {
+    singleUser: Math.round(singleUser),
+    team: Math.round(team),
+    enterprise: Math.round(enterprise),
+  };
 }
 
 /**
@@ -381,6 +407,9 @@ export function calculateMonthlyRevenue(
   const yearlyRevenue = calculateYearlyRevenue(customerMetrics, assumptions);
   const monthlyMetrics: RevenueMetrics[] = [];
 
+  // Calculate license equivalents
+  const licenseEquivalents = calculateLicenseEquivalents(customerMetrics.totalCustomers);
+
   // Distribute revenue evenly across 12 months (simplified)
   // In reality, might have seasonality or monthly growth
   for (let month = 1; month <= 12; month++) {
@@ -397,6 +426,7 @@ export function calculateMonthlyRevenue(
       cogs: yearlyRevenue.cogs / 12,
       grossProfit: yearlyRevenue.grossProfit / 12,
       grossMargin: yearlyRevenue.grossMargin,
+      licenseEquivalents,
     });
   }
 

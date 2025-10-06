@@ -51,7 +51,7 @@ export function getPreSeedAllocation(): OPEXAllocation {
 }
 
 /**
- * Series A OPEX allocation (Month 27+)
+ * Series A OPEX allocation (Month 27-50)
  * Source: OPEX_Allocation sheet, Column F
  */
 export function getSeriesAAllocation(): OPEXAllocation {
@@ -61,6 +61,23 @@ export function getSeriesAAllocation(): OPEXAllocation {
     legalAndProfessional: 8333,
     officeAndEquipment: 8333,
     travelAndEvents: 8333,
+  };
+}
+
+/**
+ * Series X OPEX allocation (Month 51+)
+ * Source: OPEX_Allocation sheet, Column I
+ * Based on Excel: 20% Product, 25% Marketing, 5% each for Legal/Office/Travel
+ */
+export function getSeriesXAllocation(): OPEXAllocation {
+  // Assuming Series X raise is similar magnitude to Series A
+  const monthlyBudget = 166667; // Estimated
+  return {
+    productDevelopment: monthlyBudget * 0.20, // 20%
+    marketingAndSales: monthlyBudget * 0.25,  // 25%
+    legalAndProfessional: monthlyBudget * 0.05, // 5%
+    officeAndEquipment: monthlyBudget * 0.05,   // 5%
+    travelAndEvents: monthlyBudget * 0.05,      // 5%
   };
 }
 
@@ -99,6 +116,11 @@ export function getFundingRounds(): FundingRound[] {
       name: 'Series A',
       startMonth: 27, // Month 27 from Reference_Funding Schedule
       allocation: getSeriesAAllocation(),
+    },
+    {
+      name: 'Series X',
+      startMonth: 51, // Estimated - 2 years after Series A
+      allocation: getSeriesXAllocation(),
     },
   ];
 }

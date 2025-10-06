@@ -13,6 +13,16 @@ export interface LicenseTier {
   distribution: number; // % of customers on this tier (0-1)
 }
 
+export interface DiscountSchedule {
+  year: number;
+  discountPercent: number; // e.g., 0.40 for 40% discount
+}
+
+export interface ChurnSchedule {
+  year: number;
+  churnRate: number; // e.g., 0.20 for 20% churn
+}
+
 export interface RevenueAssumptions {
   tam: number; // Total Addressable Market (firms)
   targetPenetration: number; // Target market share % (e.g., 0.05 for 5%)
@@ -21,8 +31,10 @@ export interface RevenueAssumptions {
   baseArr: number; // Base ARR per customer (used if no tiers)
   setupFee: number; // One-time setup fee per customer (used if no tiers)
   annualPriceIncrease: number; // Annual price escalation % (e.g., 0.03 for 3%)
-  churnRate: number; // Annual churn rate % (e.g., 0.05 for 5%)
+  churnRate: number; // Base annual churn rate % (e.g., 0.05 for 5%)
   licenseTiers?: LicenseTier[]; // Optional tiered pricing
+  discountSchedule?: DiscountSchedule[]; // Declining discounts by year
+  churnSchedule?: ChurnSchedule[]; // Declining churn by year
 }
 
 export interface CustomerMetrics {
@@ -62,6 +74,44 @@ export function calculateGrowthExponent(assumptions: RevenueAssumptions): number
 }
 
 /**
+ * Get default discount schedule from Excel Model_PnL
+ * Discounts decline from 40% in Year 1 to 2.5% by Year 10
+ */
+export function getDefaultDiscountSchedule(): DiscountSchedule[] {
+  return [
+    { year: 1, discountPercent: 0.40 },
+    { year: 2, discountPercent: 0.30 },
+    { year: 3, discountPercent: 0.20 },
+    { year: 4, discountPercent: 0.10 },
+    { year: 5, discountPercent: 0.10 },
+    { year: 6, discountPercent: 0.075 },
+    { year: 7, discountPercent: 0.05 },
+    { year: 8, discountPercent: 0.05 },
+    { year: 9, discountPercent: 0.03 },
+    { year: 10, discountPercent: 0.025 },
+  ];
+}
+
+/**
+ * Get default churn schedule from Excel Model_PnL
+ * Churn declines from 20% in Year 2 to 15% by Year 8+
+ */
+export function getDefaultChurnSchedule(): ChurnSchedule[] {
+  return [
+    { year: 1, churnRate: 0.00 }, // No churn in year 1
+    { year: 2, churnRate: 0.20 },
+    { year: 3, churnRate: 0.20 },
+    { year: 4, churnRate: 0.18 },
+    { year: 5, churnRate: 0.17 },
+    { year: 6, churnRate: 0.17 },
+    { year: 7, churnRate: 0.16 },
+    { year: 8, churnRate: 0.15 },
+    { year: 9, churnRate: 0.15 },
+    { year: 10, churnRate: 0.15 },
+  ];
+}
+
+/**
  * Get default license tiers
  */
 export function getDefaultLicenseTiers(): LicenseTier[] {
@@ -88,6 +138,34 @@ export function getDefaultLicenseTiers(): LicenseTier[] {
 }
 
 /**
+ * Get discount percent for a specific year
+ */
+export function getDiscountForYear(year: number, schedule?: DiscountSchedule[]): number {
+  const defaultSchedule = getDefaultDiscountSchedule();
+  const activeSchedule = schedule || defaultSchedule;
+
+  const entry = activeSchedule.find(s => s.year === year);
+  if (entry) return entry.discountPercent;
+
+  // Default to last entry if year exceeds schedule
+  return activeSchedule[activeSchedule.length - 1]?.discountPercent || 0;
+}
+
+/**
+ * Get churn rate for a specific year
+ */
+export function getChurnForYear(year: number, schedule?: ChurnSchedule[]): number {
+  const defaultSchedule = getDefaultChurnSchedule();
+  const activeSchedule = schedule || defaultSchedule;
+
+  const entry = activeSchedule.find(s => s.year === year);
+  if (entry) return entry.churnRate;
+
+  // Default to last entry if year exceeds schedule
+  return activeSchedule[activeSchedule.length - 1]?.churnRate || 0.15;
+}
+
+/**
  * Get default revenue assumptions from Excel model
  */
 export function getDefaultRevenueAssumptions(): RevenueAssumptions {
@@ -99,8 +177,10 @@ export function getDefaultRevenueAssumptions(): RevenueAssumptions {
     baseArr: 24000,
     setupFee: 2500,
     annualPriceIncrease: 0.03, // 3%
-    churnRate: 0.05, // 5%
+    churnRate: 0.15, // Base churn rate (overridden by schedule)
     licenseTiers: getDefaultLicenseTiers(),
+    discountSchedule: getDefaultDiscountSchedule(),
+    churnSchedule: getDefaultChurnSchedule(),
   };
 }
 
@@ -148,9 +228,12 @@ export function calculateCustomerMetrics(
   const marketPenetration = calculateMarketPenetration(year, assumptions);
   const totalCustomers = calculateTotalCustomers(year, assumptions);
 
+  // Use dynamic churn rate from schedule if available
+  const churnRate = getChurnForYear(year, assumptions.churnSchedule);
+
   // Calculate churn from previous year
   const churnedCustomers = previousMetrics
-    ? Math.round(previousMetrics.totalCustomers * assumptions.churnRate)
+    ? Math.round(previousMetrics.totalCustomers * churnRate)
     : 0;
 
   // New customers = current total - (previous total - churned)
@@ -193,18 +276,31 @@ export function calculateCustomerProjections(
 
 /**
  * Calculate weighted average ARR and setup fee from license tiers
+ * Now includes discount schedule
  */
-function calculateWeightedPricing(tiers: LicenseTier[], year: number, annualIncrease: number): {
+function calculateWeightedPricing(
+  tiers: LicenseTier[],
+  year: number,
+  annualIncrease: number,
+  discountSchedule?: DiscountSchedule[]
+): {
   weightedArr: number;
   weightedSetupFee: number;
 } {
   let totalArr = 0;
   let totalSetupFee = 0;
 
+  // Get discount for this year
+  const discount = getDiscountForYear(year, discountSchedule);
+
   for (const tier of tiers) {
     // Apply annual price increase
     const adjustedArr = tier.arrPerYear * Math.pow(1 + annualIncrease, year - 1);
-    totalArr += adjustedArr * tier.distribution;
+
+    // Apply discount
+    const discountedArr = adjustedArr * (1 - discount);
+
+    totalArr += discountedArr * tier.distribution;
     totalSetupFee += tier.setupFee * tier.distribution;
   }
 
@@ -238,13 +334,16 @@ export function calculateYearlyRevenue(
     const pricing = calculateWeightedPricing(
       assumptions.licenseTiers,
       year,
-      assumptions.annualPriceIncrease
+      assumptions.annualPriceIncrease,
+      assumptions.discountSchedule
     );
     arr = totalCustomers * pricing.weightedArr;
     setupFees = newCustomers * pricing.weightedSetupFee;
   } else {
-    // Fallback to base pricing
-    arr = totalCustomers * arrPerCustomer;
+    // Fallback to base pricing with discount
+    const discount = getDiscountForYear(year, assumptions.discountSchedule);
+    const discountedArr = arrPerCustomer * (1 - discount);
+    arr = totalCustomers * discountedArr;
     setupFees = newCustomers * assumptions.setupFee;
   }
 

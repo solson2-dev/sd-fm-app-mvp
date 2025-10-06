@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { validateFundingAmount, validateValuation, validateRequired } from '@/lib/utils/validation';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -30,6 +31,7 @@ export default function FundingPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [validationError, setValidationError] = useState<string>('');
 
   const [formData, setFormData] = useState({
     roundName: 'Pre-Seed',
@@ -62,6 +64,27 @@ export default function FundingPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setValidationError('');
+
+    // Validate form data
+    const requiredValidation = validateRequired(formData.roundName, 'Round name');
+    if (!requiredValidation.isValid) {
+      setValidationError(requiredValidation.error!);
+      return;
+    }
+
+    const amountValidation = validateFundingAmount(formData.amount);
+    if (!amountValidation.isValid) {
+      setValidationError(amountValidation.error!);
+      return;
+    }
+
+    const valuationValidation = validateValuation(formData.valuation, formData.amount);
+    if (!valuationValidation.isValid) {
+      setValidationError(valuationValidation.error!);
+      return;
+    }
+
     setEditing(true);
 
     try {
@@ -78,9 +101,13 @@ export default function FundingPage() {
         await loadFundingRounds();
         setShowModal(false);
         resetForm();
+      } else {
+        const error = await response.json();
+        setValidationError(error.error || 'Failed to save funding round');
       }
     } catch (error) {
       console.error('Error saving funding round:', error);
+      setValidationError('An unexpected error occurred');
     } finally {
       setEditing(false);
     }
@@ -280,6 +307,12 @@ export default function FundingPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4">Add Funding Round</h2>
+
+            {validationError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {validationError}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

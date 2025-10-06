@@ -59,6 +59,16 @@ export default function Home() {
               Income statement, cash flow, and balance sheet
             </p>
           </Link>
+
+          <Link
+            href="/funding"
+            className="p-6 border rounded-lg hover:border-indigo-500 hover:shadow-lg transition-all bg-indigo-50"
+          >
+            <h2 className="text-2xl font-semibold mb-2">Funding Rounds 💰</h2>
+            <p className="text-gray-600">
+              Track capital raises and investor equity
+            </p>
+          </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">

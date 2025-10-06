@@ -129,7 +129,17 @@ export default function FundingPage() {
     });
   }
 
-  const totalRaised = fundingRounds.reduce((sum, round) => sum + round.amount, 0);
+  const totalRaised = fundingRounds.reduce((sum, round) => sum + round.amount_raised, 0);
+
+  // Calculate cumulative dilution
+  let cumulativeDilution = 0;
+  const roundsWithDilution = fundingRounds.map((round) => {
+    const dilution = round.post_money_valuation > 0
+      ? (round.amount_raised / round.post_money_valuation) * 100
+      : 0;
+    cumulativeDilution += dilution;
+    return { ...round, dilution, cumulativeDilution };
+  });
 
   if (loading) {
     return (
@@ -213,6 +223,9 @@ export default function FundingPage() {
                     <th className="px-6 py-3 text-right text-sm font-semibold">
                       Valuation
                     </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold">
+                      Dilution
+                    </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">
                       Date
                     </th>
@@ -225,7 +238,7 @@ export default function FundingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {fundingRounds.map((round) => (
+                  {roundsWithDilution.map((round) => (
                     <tr key={round.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm font-medium">
                         {round.round_name}
@@ -235,6 +248,9 @@ export default function FundingPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-right font-mono">
                         {formatCurrency(round.post_money_valuation)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right font-mono">
+                        {round.dilution.toFixed(1)}%
                       </td>
                       <td className="px-6 py-4 text-sm">
                         {formatDate(round.close_date)}

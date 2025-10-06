@@ -1,140 +1,257 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Settings,
+  Users,
+  LayoutDashboard,
+  TrendingUp,
+  FileText,
+  DollarSign,
+  PieChart,
+  Target,
+  GitCompare,
+} from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 p-8 pb-20 sm:p-20">
-      <main className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="text-4xl font-bold text-black dark:text-white">StudioDatum Financial Model - MVP</h1>
+    <div className="min-h-screen p-8 pb-20 sm:p-20">
+      <main className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-5xl font-bold tracking-tight mb-2">
+              StudioDatum Financial Model
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              OPEX modeling with validated calculations
+            </p>
+          </div>
           <ThemeToggle />
         </div>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-          OPEX modeling with validated calculations (100% Excel accuracy)
-        </p>
+
+        <div className="mb-12">
+          <Badge variant="outline" className="text-success border-success">
+            100% Excel accuracy
+          </Badge>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Link
-            href="/variables"
-            className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded hover:border-blue-600 dark:hover:border-blue-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-blue-900 dark:text-blue-100">⚙️ Variables & Assumptions</h2>
-            <p className="text-blue-700 dark:text-blue-300 text-sm">
-              Configure all model assumptions and key parameters
-            </p>
+          <Link href="/variables" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Settings className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Variables & Assumptions
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Configure all model assumptions and key parameters
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/personnel"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Personnel Planning</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Configure personnel roles, salaries, and start dates
-            </p>
+          <Link href="/personnel" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Users className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Personnel Planning
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Configure personnel roles, salaries, and start dates
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/dashboard"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">OPEX Dashboard</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              View 36-month OPEX projections and key metrics
-            </p>
+          <Link href="/dashboard" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <LayoutDashboard className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    OPEX Dashboard
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  View 36-month OPEX projections and key metrics
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/revenue"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Revenue Model</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Customer acquisition, ARR, and 10-year revenue projections
-            </p>
+          <Link href="/revenue" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Revenue Model
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Customer acquisition, ARR, and 10-year revenue projections
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/scenarios"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Scenarios</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Create and compare multiple financial scenarios
-            </p>
+          <Link href="/scenarios" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <FileText className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Scenarios
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Create and compare multiple financial scenarios
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/financials"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Financials</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Income statement, cash flow, and balance sheet
-            </p>
+          <Link href="/financials" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Financials
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Income statement, cash flow, and balance sheet
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/funding"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Funding Rounds</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Track capital raises and investor equity
-            </p>
+          <Link href="/funding" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Funding Rounds
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Track capital raises and investor equity
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/equity"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Equity & Cap Table</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Founder equity, ESOP pool, and dilution tracking
-            </p>
+          <Link href="/equity" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <PieChart className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Equity & Cap Table
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Founder equity, ESOP pool, and dilution tracking
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/exit-scenarios"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Exit Scenarios</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Valuation multiples, ROI, and investor returns
-            </p>
+          <Link href="/exit-scenarios" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Target className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Exit Scenarios
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Valuation multiples, ROI, and investor returns
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          <Link
-            href="/scenarios/compare"
-            className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Scenario Comparison</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Compare metrics across different scenarios
-            </p>
+          <Link href="/scenarios/compare" className="group">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <GitCompare className="h-6 w-6 text-primary" />
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Scenario Comparison
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Compare metrics across different scenarios
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded">
-            <h3 className="text-lg font-semibold mb-2 text-black dark:text-white">OPEX Model Validated</h3>
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <li>• Month 12 Total OPEX: $99,500 (±$1)</li>
-              <li>• Month 36 Total OPEX: $220,750 (±$1)</li>
-              <li>• Cumulative Month 12: $939,000 (±$3)</li>
-              <li>• 100% accuracy vs Excel model</li>
-            </ul>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>OPEX Model Validated</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Month 12 Total OPEX:</span>
+                  <span className="font-semibold tabular-nums">$99,500 (±$1)</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Month 36 Total OPEX:</span>
+                  <span className="font-semibold tabular-nums">$220,750 (±$1)</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Cumulative Month 12:</span>
+                  <span className="font-semibold tabular-nums">$939,000 (±$3)</span>
+                </li>
+                <li className="flex justify-between pt-2 border-t">
+                  <span className="text-muted-foreground">Accuracy vs Excel:</span>
+                  <Badge variant="outline" className="text-success border-success">
+                    100%
+                  </Badge>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
 
-          <div className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded">
-            <h3 className="text-lg font-semibold mb-2 text-black dark:text-white">Revenue Model Targets</h3>
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <li>• Year 5 ARR: $15.3M</li>
-              <li>• Year 5 Customers: 631</li>
-              <li>• Year 5 Revenue: $15.9M</li>
-              <li>• S-curve customer acquisition</li>
-            </ul>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue Model Targets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Year 5 ARR:</span>
+                  <span className="font-semibold tabular-nums">$15.3M</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Year 5 Customers:</span>
+                  <span className="font-semibold tabular-nums">631</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Year 5 Revenue:</span>
+                  <span className="font-semibold tabular-nums">$15.9M</span>
+                </li>
+                <li className="flex justify-between pt-2 border-t">
+                  <span className="text-muted-foreground">Acquisition Model:</span>
+                  <span className="font-semibold">S-curve</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

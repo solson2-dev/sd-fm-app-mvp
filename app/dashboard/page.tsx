@@ -15,11 +15,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { MonthlyOPEX } from '@/lib/calculations/opex';
-import { CardSkeleton } from '@/components/skeletons/CardSkeleton';
-import { ChartSkeleton } from '@/components/skeletons/ChartSkeleton';
-import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ErrorState';
 import { Spinner } from '@/components/skeletons/Spinner';
+import { ArrowLeft, RefreshCw, Users } from 'lucide-react';
 
 const DEFAULT_SCENARIO_ID = 'b0000000-0000-0000-0000-000000000001';
 
@@ -103,25 +106,45 @@ export default function DashboardPage() {
       <div className="min-h-screen p-8 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-64 animate-pulse" />
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-4 w-96" />
+            </div>
             <div className="flex gap-3">
-              <div className="h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-              <div className="h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+              <Skeleton className="h-11 w-32" />
+              <Skeleton className="h-11 w-32" />
+              <Skeleton className="h-11 w-24" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <CardSkeleton count={4} />
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardHeader className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                </CardHeader>
+              </Card>
+            ))}
           </div>
 
-          <ChartSkeleton />
-          <div className="mt-6">
-            <ChartSkeleton />
-          </div>
-          <div className="mt-6">
-            <TableSkeleton rows={12} columns={4} />
-          </div>
+          <Card className="mb-6">
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-80 w-full" />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-80 w-full" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -151,141 +174,209 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-8 pb-20">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">OPEX Dashboard</h1>
-            <p className="text-gray-600 mt-2">36-month operating expense projections</p>
+            <h1 className="text-4xl font-bold tracking-tight">OPEX Dashboard</h1>
+            <p className="text-muted-foreground mt-2">36-month operating expense projections</p>
           </div>
           <div className="flex gap-3">
-            <button
+            <Button
               onClick={handleRecalculate}
               disabled={recalculating}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              variant="outline"
+              size="lg"
+              aria-label={recalculating ? 'Recalculating projections' : 'Recalculate projections'}
             >
-              {recalculating && <Spinner size="sm" />}
+              <RefreshCw className={recalculating ? 'animate-spin' : ''} />
               {recalculating ? 'Recalculating...' : 'Recalculate'}
-            </button>
-            <Link href="/personnel" className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-              Edit Personnel
-            </Link>
-            <Link href="/" className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-              ← Home
-            </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/personnel" aria-label="Edit personnel data">
+                <Users />
+                Edit Personnel
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
+              <Link href="/" aria-label="Return to home page">
+                <ArrowLeft />
+                Home
+              </Link>
+            </Button>
           </div>
         </div>
 
         {/* Key Metrics */}
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="p-4 bg-white border rounded-lg">
-              <div className="text-sm text-gray-600">Month 12 OPEX</div>
-              <div className="text-2xl font-bold">
-                ${summary.month12.totalOPEX.toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {summary.month12.headcount} employees
-              </div>
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription>Month 12 OPEX</CardDescription>
+                <CardTitle className="text-3xl tabular-nums">
+                  ${summary.month12.totalOPEX.toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {summary.month12.headcount} employees
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="p-4 bg-white border rounded-lg">
-              <div className="text-sm text-gray-600">Month 36 OPEX</div>
-              <div className="text-2xl font-bold">
-                ${summary.month36.totalOPEX.toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {summary.month36.headcount} employees
-              </div>
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription>Month 36 OPEX</CardDescription>
+                <CardTitle className="text-3xl tabular-nums">
+                  ${summary.month36.totalOPEX.toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {summary.month36.headcount} employees
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="p-4 bg-white border rounded-lg">
-              <div className="text-sm text-gray-600">Cumulative (12 mo)</div>
-              <div className="text-2xl font-bold">
-                ${Math.round(summary.month12.cumulative).toLocaleString()}
-              </div>
-              <div className="text-xs text-green-600 mt-1">✅ Excel validated</div>
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription>Cumulative (12 mo)</CardDescription>
+                <CardTitle className="text-3xl tabular-nums">
+                  ${Math.round(summary.month12.cumulative).toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge variant="outline" className="text-success border-success">
+                  Excel validated
+                </Badge>
+              </CardContent>
+            </Card>
 
-            <div className="p-4 bg-white border rounded-lg">
-              <div className="text-sm text-gray-600">Cumulative (36 mo)</div>
-              <div className="text-2xl font-bold">
-                ${Math.round(summary.month36.cumulative).toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Avg ${Math.round(summary.month36.cumulative / 36).toLocaleString()}/mo
-              </div>
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription>Cumulative (36 mo)</CardDescription>
+                <CardTitle className="text-3xl tabular-nums">
+                  ${Math.round(summary.month36.cumulative).toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Avg ${Math.round(summary.month36.cumulative / 36).toLocaleString()}/mo
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Total OPEX Line Chart */}
-        <div className="bg-white border rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Total OPEX Over Time</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#2563eb"
-                strokeWidth={2}
-                name="Total OPEX"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Total OPEX Over Time</CardTitle>
+            <CardDescription>Monthly operating expenses across 36 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="month"
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip
+                  formatter={(value) => `$${Number(value).toLocaleString()}`}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={2}
+                  name="Total OPEX"
+                  dot={{ fill: 'hsl(var(--chart-1))' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
         {/* Stacked Bar Chart */}
-        <div className="bg-white border rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">OPEX Breakdown</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
-              <Legend />
-              <Bar dataKey="personnel" stackId="a" fill="#2563eb" name="Personnel" />
-              <Bar dataKey="operating" stackId="a" fill="#60a5fa" name="Operating" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>OPEX Breakdown</CardTitle>
+            <CardDescription>Personnel vs operating expenses by month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="month"
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip
+                  formatter={(value) => `$${Number(value).toLocaleString()}`}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="personnel" stackId="a" fill="hsl(var(--chart-1))" name="Personnel" />
+                <Bar dataKey="operating" stackId="a" fill="hsl(var(--chart-3))" name="Operating" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
         {/* Data Table */}
-        <div className="bg-white border rounded-lg overflow-hidden">
-          <h2 className="text-xl font-semibold p-6 border-b">Monthly Projections</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Month</th>
-                  <th className="px-4 py-3 text-right font-semibold">Personnel</th>
-                  <th className="px-4 py-3 text-right font-semibold">Operating</th>
-                  <th className="px-4 py-3 text-right font-semibold">Total OPEX</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Projections</CardTitle>
+            <CardDescription>Quarterly summary of operating expenses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Month</TableHead>
+                  <TableHead className="text-right">Personnel</TableHead>
+                  <TableHead className="text-right">Operating</TableHead>
+                  <TableHead className="text-right">Total OPEX</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {projections.filter((p) => p.month % 3 === 0).map((p) => (
-                  <tr key={p.month} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">Month {p.month}</td>
-                    <td className="px-4 py-3 text-right">
+                  <TableRow key={p.month}>
+                    <TableCell className="font-medium">Month {p.month}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       ${Math.round(p.personnelCost).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
                       ${Math.round(p.operatingSubtotal).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold">
+                    </TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">
                       ${Math.round(p.totalOPEX).toLocaleString()}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

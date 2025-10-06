@@ -11,6 +11,8 @@
  * Errors in layout.tsx or global components are caught by global-error.tsx
  */
 
+import Link from 'next/link';
+
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -61,12 +63,12 @@ export default function Error({ error, reset }: ErrorProps) {
           >
             Try again
           </button>
-          <a
+          <Link
             href="/"
             className="flex-1 px-4 py-2 border border-red-600 dark:border-red-400 text-red-600 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-center focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Go home
-          </a>
+          </Link>
         </div>
 
         <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">

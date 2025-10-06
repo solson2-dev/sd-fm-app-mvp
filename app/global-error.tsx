@@ -12,6 +12,8 @@
  * because it replaces the entire root layout when an error occurs.
  */
 
+import Link from 'next/link';
+
 interface GlobalErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -86,12 +88,12 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 Reload application
               </button>
 
-              <a
+              <Link
                 href="/"
                 className="block w-full px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 Return to home page
-              </a>
+              </Link>
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">

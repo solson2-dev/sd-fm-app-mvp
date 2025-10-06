@@ -79,6 +79,16 @@ export default function Home() {
               Founder equity, ESOP pool, and dilution tracking
             </p>
           </Link>
+
+          <Link
+            href="/exit-scenarios"
+            className="p-6 bg-white border border-gray-300 rounded hover:border-gray-900 transition-all"
+          >
+            <h2 className="text-xl font-semibold mb-2 text-black">Exit Scenarios</h2>
+            <p className="text-gray-600 text-sm">
+              Valuation multiples, ROI, and investor returns
+            </p>
+          </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">

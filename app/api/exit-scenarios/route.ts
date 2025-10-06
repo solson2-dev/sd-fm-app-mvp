@@ -80,7 +80,7 @@ export async function GET(request: Request) {
 
     const esopPoolSize = esopData ? parseFloat(esopData.value) : 0.15;
 
-    // Generate cap table to get equity ownership per round
+    // Generate cap table to get equity ownership per round (with ESOP refresh)
     const capTable = generateCapTable(
       founders,
       esopPoolSize,
@@ -88,6 +88,7 @@ export async function GET(request: Request) {
         roundName: r.round_name,
         amount: r.amount_raised || 0,
         valuation: r.post_money_valuation || 0,
+        esopRefresh: r.esop_refresh_target || undefined,
       }))
     );
 
@@ -95,16 +96,16 @@ export async function GET(request: Request) {
     const ebitda = incomeData?.ebitda || 0;
 
     // Calculate exit scenarios with different multiples
-    const arrMultiples = [5, 7.5, 10, 12.5, 15];
-    const ebitdaMultiples = [10, 12.5, 15, 17.5, 20];
+    // Based on Excel Reference_Exit Senarios sheet: 2x, 3x, 5x, 6x, 8x, 10x, 15x, 20x, 25x
+    const exitMultiples = [2, 3, 5, 6, 8, 10, 15, 20, 25];
 
-    const scenarios = arrMultiples.map((arrMult, idx) => {
-      const ebitdaMult = ebitdaMultiples[idx];
+    const scenarios = exitMultiples.map((multiple) => {
+      // Use same multiple for both ARR and EBITDA valuation, then average
       const exitValuation = calculateExitValuation(
         arr,
         ebitda,
-        arrMult,
-        ebitdaMult,
+        multiple,
+        multiple,
         'average'
       );
 
@@ -137,8 +138,9 @@ export async function GET(request: Request) {
       });
 
       return {
-        arrMultiple: arrMult,
-        ebitdaMultiple: ebitdaMult,
+        multiple: multiple,
+        arrMultiple: multiple,
+        ebitdaMultiple: multiple,
         exitValuation,
         roundReturns,
       };

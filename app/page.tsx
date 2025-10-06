@@ -15,6 +15,16 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
+            href="/variables"
+            className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded hover:border-blue-600 dark:hover:border-blue-500 transition-all"
+          >
+            <h2 className="text-xl font-semibold mb-2 text-blue-900 dark:text-blue-100">⚙️ Variables & Assumptions</h2>
+            <p className="text-blue-700 dark:text-blue-300 text-sm">
+              Configure all model assumptions and key parameters
+            </p>
+          </Link>
+
+          <Link
             href="/personnel"
             className="p-6 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-900 dark:hover:border-gray-500 transition-all"
           >

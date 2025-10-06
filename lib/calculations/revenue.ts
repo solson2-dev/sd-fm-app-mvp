@@ -6,15 +6,23 @@
  * Validated against Excel: Year 5 ARR = $15,332,765, Customers = 631
  */
 
+export interface LicenseTier {
+  name: string;
+  arrPerYear: number;
+  setupFee: number;
+  distribution: number; // % of customers on this tier (0-1)
+}
+
 export interface RevenueAssumptions {
   tam: number; // Total Addressable Market (firms)
   targetPenetration: number; // Target market share % (e.g., 0.05 for 5%)
   yearsToTarget: number; // Years to reach target penetration
   year1Customers: number; // Starting customer count
-  baseArr: number; // Base ARR per customer
-  setupFee: number; // One-time setup fee per customer
+  baseArr: number; // Base ARR per customer (used if no tiers)
+  setupFee: number; // One-time setup fee per customer (used if no tiers)
   annualPriceIncrease: number; // Annual price escalation % (e.g., 0.03 for 3%)
   churnRate: number; // Annual churn rate % (e.g., 0.05 for 5%)
+  licenseTiers?: LicenseTier[]; // Optional tiered pricing
 }
 
 export interface CustomerMetrics {
@@ -54,6 +62,32 @@ export function calculateGrowthExponent(assumptions: RevenueAssumptions): number
 }
 
 /**
+ * Get default license tiers
+ */
+export function getDefaultLicenseTiers(): LicenseTier[] {
+  return [
+    {
+      name: 'Starter',
+      arrPerYear: 12000,
+      setupFee: 1000,
+      distribution: 0.50, // 50% of customers
+    },
+    {
+      name: 'Professional',
+      arrPerYear: 24000,
+      setupFee: 2500,
+      distribution: 0.35, // 35% of customers
+    },
+    {
+      name: 'Enterprise',
+      arrPerYear: 48000,
+      setupFee: 5000,
+      distribution: 0.15, // 15% of customers
+    },
+  ];
+}
+
+/**
  * Get default revenue assumptions from Excel model
  */
 export function getDefaultRevenueAssumptions(): RevenueAssumptions {
@@ -66,6 +100,7 @@ export function getDefaultRevenueAssumptions(): RevenueAssumptions {
     setupFee: 2500,
     annualPriceIncrease: 0.03, // 3%
     churnRate: 0.05, // 5%
+    licenseTiers: getDefaultLicenseTiers(),
   };
 }
 
@@ -157,6 +192,29 @@ export function calculateCustomerProjections(
 }
 
 /**
+ * Calculate weighted average ARR and setup fee from license tiers
+ */
+function calculateWeightedPricing(tiers: LicenseTier[], year: number, annualIncrease: number): {
+  weightedArr: number;
+  weightedSetupFee: number;
+} {
+  let totalArr = 0;
+  let totalSetupFee = 0;
+
+  for (const tier of tiers) {
+    // Apply annual price increase
+    const adjustedArr = tier.arrPerYear * Math.pow(1 + annualIncrease, year - 1);
+    totalArr += adjustedArr * tier.distribution;
+    totalSetupFee += tier.setupFee * tier.distribution;
+  }
+
+  return {
+    weightedArr: totalArr,
+    weightedSetupFee: totalSetupFee,
+  };
+}
+
+/**
  * Calculate revenue metrics for a single year
  */
 export function calculateYearlyRevenue(
@@ -170,13 +228,25 @@ export function calculateYearlyRevenue(
   grossProfit: number;
   grossMargin: number;
 } {
-  const { totalCustomers, newCustomers, arrPerCustomer } = customerMetrics;
+  const { totalCustomers, newCustomers, arrPerCustomer, year } = customerMetrics;
 
-  // ARR = total customers × ARR per customer
-  const arr = totalCustomers * arrPerCustomer;
+  let arr: number;
+  let setupFees: number;
 
-  // Setup fees = new customers × setup fee
-  const setupFees = newCustomers * assumptions.setupFee;
+  // Use tiered pricing if available, otherwise use base pricing
+  if (assumptions.licenseTiers && assumptions.licenseTiers.length > 0) {
+    const pricing = calculateWeightedPricing(
+      assumptions.licenseTiers,
+      year,
+      assumptions.annualPriceIncrease
+    );
+    arr = totalCustomers * pricing.weightedArr;
+    setupFees = newCustomers * pricing.weightedSetupFee;
+  } else {
+    // Fallback to base pricing
+    arr = totalCustomers * arrPerCustomer;
+    setupFees = newCustomers * assumptions.setupFee;
+  }
 
   // Total revenue = ARR + setup fees
   const totalRevenue = arr + setupFees;
